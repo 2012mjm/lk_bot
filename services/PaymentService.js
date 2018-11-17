@@ -145,6 +145,13 @@ PaymentService.zarinpalVerify = (trackingCode, authority, status, type) => {
                 else if(type === 'donate') {
                   return resolve({url: redirectUrl, tgId: user.data.tgId, message: 'بسیار تشکر از حمایت شما 🌺😍', options: config.keyboard.start})
                 }
+                else if(type === 'likeup') {
+                  PostService.likeEmojiIncrease(user.data.likeupCount).then(result => {
+                    return resolve({url: redirectUrl, tgId: user.data.tgId, message: result.message, options: config.keyboard.start, post: result.post})
+                  }, () => {
+                    return reject({url: redirectUrl, tgId: user.data.tgId, message: result.message})
+                  })
+                }
               } else {
                 return reject({url: redirectUrl, tgId: user.data.tgId, message: config.message.error_payment})
               }

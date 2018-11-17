@@ -368,6 +368,13 @@ PostService.publish = (user, text) => {
       switch_inline_query: `#${user.data.draftPostId}`
     }])
 
+    if(hasLike) {
+      inlineKeyboard.push([{
+        text: '💘 افزایش لایک‌ها',
+        callback_data: `likeup_${user.data.draftPostId}`
+      }])
+    }
+
     const options = {
       reply_markup: {
         inline_keyboard: inlineKeyboard
@@ -509,6 +516,13 @@ PostService.generateInlineKeyboard = (data, withPublishButton=false) => {
     inlineKeyboard.push([{
       text: config.message.publish_button_keyboard,
       switch_inline_query: `#${data.id}`
+    }])
+  }
+  
+  if(data.hasLike === 1) {
+    inlineKeyboard.push([{
+      text: '💘 افزایش لایک‌ها',
+      callback_data: `likeup_${data.id}`
     }])
   }
 
@@ -765,6 +779,13 @@ PostService.selfView = (user, postId) => {
         text: config.message.publish_button_keyboard,
         switch_inline_query: `#${post.data.id}`
       }])
+  
+      if(post.data.hasLike === 1) {
+        options.reply_markup.inline_keyboard.push([{
+          text: '💘 افزایش لایک‌ها',
+          callback_data: `likeup_${post.data.id}`
+        }])
+      }
 
       if(post.data.challengeId !== 0) {
         ChallengeService.findById(post.data.challengeId).then(challenge => {
@@ -1024,6 +1045,72 @@ PostService.manageIncreaseLikeCount = (user, countIncrease) => {
         return resolve({message: config.message.admin_success_updated, post: postUpdated})
       }, () => {
         return reject({message: config.message.admin_error_updated})
+      })
+    })
+  })
+}
+
+PostService.likeEmojiList = (user, postId) => {
+  return new Promise((resolve, reject) =>
+  {
+    UserService.update(user.model, {state: 'post_like_emoji_selected', selectedPostId: postId})
+    PostService.findByIdAndUserId(postId, user.data.id).then(post => {
+      let likeList = []
+      for(let num=1; num<=6; num++) {
+        if(post.data[`likeText${num}`] !== '')
+        {
+          likeList.push({
+            text: post.data[`likeText${num}`],
+            callback_data: `likeup_${postId}_selected_${num}`
+          })
+        }
+      }
+      const options = {reply_markup: {inline_keyboard: [likeList]}}
+      return resolve({message: 'کدوم یکی رو میخوایی افزایش لایک بدی؟ 👇🏻', options: options})
+    })
+  })
+}
+
+PostService.likeEmojiListSelected = (user, postId, selected) => {
+  return new Promise((resolve, reject) =>
+  {
+    UserService.update(user.model, {state: 'post_like_emoji_count', selectedLikeNumber: selected})
+
+    const options = {
+      reply_markup: {
+        inline_keyboard: [
+          [{
+            text: '۱۰۰ لایک - هزار تومن',
+            callback_data: `likeup_count_100`
+          }], [{
+            text: '۵۰۰ لایک - دو هزار تومن',
+            callback_data: `likeup_count_500`
+          }], [{
+            text: '۱۰۰۰ لایک - سه هزار تومن',
+            callback_data: `likeup_count_1000`
+          }], [{
+            text: '۵۰۰۰ لایک - پنج هزار تومن',
+            callback_data: `likeup_count_5000`
+          }],
+        ]
+      }
+    }
+    return resolve({message: '😍 چقدر لایک میخوایی؟', options: options})
+  })
+}
+
+PostService.likeEmojiIncrease = (user, countIncrease) => {
+  return new Promise((resolve, reject) =>
+  {
+    PostService.findById(user.data.selectedPostId).then(post =>
+    {
+      let newAttr = {}
+      newAttr[`likeCount${user.data.selectedLikeNumber}`] = post.data[`likeCount${user.data.selectedLikeNumber}`] + countIncrease
+      PostService.update(post.model, newAttr).then(postUpdated => {
+        UserService.updateState(user.model, null)
+        return resolve({message: 'لایک پستت رو هر جایی که هست افزایش دادم 💘', post: postUpdated})
+      }, () => {
+        return reject({message: config.message.problem_call_support})
       })
     })
   })

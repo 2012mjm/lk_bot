@@ -22,13 +22,6 @@ const PaymentService    = require('./services/PaymentService')
 redisClient.on('connect', () => {
   nohm.setClient(redisClient);
 
-  // backup user data
-  // UserService.backup().then((res) => {
-  //   console.log(res)
-  // }, (err) => {
-  //   console.log(err)
-  // })
-
   // update likes
   // PostService.fixOneLikeCount()
 
@@ -42,6 +35,11 @@ redisClient.on('connect', () => {
   app.get('/zarinpal-verify/:trackingCode/:type', function(req, res) {
     PaymentService.zarinpalVerify(req.params.trackingCode, req.query.Authority, req.query.Status, req.params.type).then((result) => {
       bot.sendMessage(result.tgId, result.message, result.options).then().catch(e => logError(e, user, 'zarinpal_verify'))
+
+      if(req.params.type === 'likeup') {
+        editPostMessage(bot, result.post)
+      }
+
       res.redirect(result.url)
     }, (error) => {
       if(error.tgId !== null) bot.sendMessage(error.tgId, error.message).then().catch(e => logError(e, user, 'zarinpal_verify_error'))
@@ -514,6 +512,50 @@ redisClient.on('connect', () => {
           const newInlineMessageId = (callbackQuery.inline_message_id !== undefined) ? callbackQuery.inline_message_id : null
           editPostMessage(bot, newPost, newInlineMessageId)
           bot.answerCallbackQuery({callback_query_id: callbackQuery.id, text: config.message.save_success})
+        })
+      }
+      /**
+       * like up post - step 1
+       */
+      if (match = data.match(/^likeup_(\d+)$/i)) {
+        const postId   = parseInt(match[1])
+
+        PostService.likeEmojiList(user, postId).then(result => {
+          bot.sendMessage(callbackQuery.message.chat.id, result.message, result.options).then(() => {
+            bot.answerCallbackQuery({callback_query_id: callbackQuery.id})
+          }).catch(e => logError(e, user, 'post(d)_like_increase'))
+        })
+      }
+      /**
+       * like up post by selected item - step 2
+       */
+      if (match = data.match(/^likeup_(\d+)_selected_(\d+)$/i)) {
+        const postId   = parseInt(match[1])
+        const selected = parseInt(match[2])
+
+        PostService.likeEmojiListSelected(user, postId, selected).then(result => {
+          bot.sendMessage(callbackQuery.message.chat.id, result.message, result.options).then(() => {
+            bot.answerCallbackQuery({callback_query_id: callbackQuery.id})
+          }).catch(e => logError(e, user, 'post(d)_like_increase'))
+        })
+      }
+      /**
+       * like up by count - step 3
+       */
+      if (match = data.match(/^likeup_count_(\d+)$/i)) {
+        const count = parseInt(match[1])
+        const countPrice = {'100': 1000, '500': 2000, '1000': 3000, '5000': 5000}
+        
+        UserService.update(user.model, {state: 'post_like_emoji_pay', likeupCount: count})
+        
+        PaymentService.zarinpalRequest(user, countPrice[count], 'likeup', `افزایش لایک ${count} تایی`).then(zarinpal => {
+          const options = {reply_markup: {inline_keyboard: [[{
+            text: 'اتصال به درگاه پرداخت',
+            url: zarinpal.url
+          }]]}}
+          bot.sendMessage(callbackQuery.message.chat.id, 'برای پرداخت روی دکمه شیشه‌ای زیر کلیک کن', options).then(() => {
+            bot.answerCallbackQuery({callback_query_id: callbackQuery.id})
+          })
         })
       }
       /**
