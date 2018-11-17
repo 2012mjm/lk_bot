@@ -132,9 +132,10 @@ PaymentService.zarinpalVerify = (trackingCode, authority, status, type) => {
         		Amount: payment.data.amount,
         		Authority: authority,
         	}).then(response => {
+            console.log('response payment: '+response)
             PaymentService.update(payment.model, parseInt(response.status), status, response.RefID).then(paymentUpdated =>
             {
-              if (parseInt(response.status) === 100) {
+              if (parseInt(response.status) === 101) {
                 if(type === 'charge') {
                   UserService.update(user.model, {chargeAmount: user.data.chargeAmount+config.params.chargeAmount}).then(userUpdated => {
                     return resolve({url: redirectUrl, tgId: user.data.tgId, message: config.message.success_to_vip_account, options: config.keyboard.start})

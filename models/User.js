@@ -29,6 +29,9 @@ module.exports = nohm.model('User', {
     selectedLikeNumber: {
       type: 'integer',
     },
+    likeupCount: {
+      type: 'integer',
+    },
     draftPostId: {
       type: 'integer',
     },
