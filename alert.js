@@ -19,7 +19,10 @@ let broadcastError = 0
 connection.query(
     "SELECT * FROM `user` WHERE `postCount` > 0 AND `broadcastSuccess` = 0 AND `broadcastError` = 0",
     (error, results, fields) => {
-        results.forEach(user => {
+
+        let i=0
+        setInterval(() => {
+            let user = results[i]
             console.log(user.tgId, user.username)
 
             bot.sendMessage(user.tgId, message).then(() => {
@@ -29,9 +32,14 @@ connection.query(
                 connection.query(`UPDATE user SET broadcastError = broadcastError + 1 WHERE id = ${user.id}`, () => {})
                 broadcastError++
             })
-        })
+            i++
+
+            if(i >= results.length) {
+                console.log('\n\n================================')
+                console.log('broadcastSuccess', broadcastSuccess)
+                console.log('broadcastError', broadcastError)
+            }
+        }, 3000)
     }
 )
 
-console.log('broadcastSuccess', broadcastSuccess)
-console.log('broadcastError', broadcastError)
