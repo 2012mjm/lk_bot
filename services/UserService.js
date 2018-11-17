@@ -180,7 +180,7 @@ UserService.miniBackup = () => {
       const fileName = `user_backup_${moment().format('YYYY_MM_DD')}-mini.sql`
       let text = ''
 
-      fs.appendFile(fileName, 'INSERT INTO `user` (`id`, `tgId`, `username`, `chargeAmount`, `postCount`, `createdAt`, `updatedAt`, `broadcastSuccess`, `broadcastError`) VALUES\n')
+      fs.appendFile(fileName, 'INSERT INTO `user` (`id`, `tgId`, `username`, `chargeAmount`, `postCount`, `createdAt`, `updatedAt`, `broadcastSuccess`, `broadcastError`) VALUES\n', (err) => {console.log(err)})
 
       let count = 0
       let countSuccess = 0
