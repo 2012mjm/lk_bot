@@ -17,7 +17,7 @@ let broadcastSuccess = 0
 let broadcastError = 0
 
 connection.query(
-    "SELECT * FROM `user` WHERE `postCount` > 0",
+    "SELECT * FROM `user` WHERE `postCount` > 0 AND `broadcastSuccess` = 0",
     (error, results, fields) => {
         results.forEach(user => {
             console.log(user.tgId, user.username)
