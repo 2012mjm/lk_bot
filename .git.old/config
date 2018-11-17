@@ -1,0 +1,11 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[remote "origin"]
+	fetch = +refs/heads/*:refs/remotes/origin/*
+	url = http://root:mjm6241042@mjm3d.ir:2015/root/like_bot.git
+[branch "master"]
+	remote = origin
+	merge = refs/heads/master
