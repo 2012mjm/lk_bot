@@ -519,7 +519,7 @@ PostService.generateInlineKeyboard = (data, withPublishButton=false) => {
     }])
   }
   
-  if(data.hasLike === 1) {
+  if(withPublishButton && data.hasLike === 1) {
     inlineKeyboard.push([{
       text: '💘 افزایش لایک‌ها',
       callback_data: `likeup_${data.id}`
@@ -780,7 +780,7 @@ PostService.selfView = (user, postId) => {
         switch_inline_query: `#${post.data.id}`
       }])
   
-      if(post.data.hasLike === 1) {
+      if(post.data.challengeId === 0 && post.data.hasLike === 1) {
         options.reply_markup.inline_keyboard.push([{
           text: '💘 افزایش لایک‌ها',
           callback_data: `likeup_${post.data.id}`
